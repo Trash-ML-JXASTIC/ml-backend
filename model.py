@@ -1,95 +1,89 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
-import random
 import tensorflow as tf
-import pathlib
-from pathlib import Path
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Conv2D, Flatten, Dropout, MaxPooling2D
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+
 import os
+import numpy as np
+import matplotlib.pyplot as plt
+import pathlib
 
-tf.compat.v1.enable_eager_execution()
+data_root = pathlib.Path("data")
+cardboard_dir = os.path.join(data_root, 'cardboard')
+glass_dir = os.path.join(data_root, 'glass')
 
-data_root = Path("./data")
-for item in data_root.iterdir():
-    print("Item: ", item)
+num_cardboard = len(os.listdir(cardboard_dir))
+num_glass = len(os.listdir(glass_dir))
+total = num_cardboard + num_glass
 
-all_image_paths = list(data_root.glob('*/*'))
-all_image_paths = [str(path) for path in all_image_paths]
-random.shuffle(all_image_paths)
+print('total training cardboard images:', num_cardboard)
+print('total training glass images:', num_glass)
+print("--")
+print("Total training images:", total)
 
-image_count = len(all_image_paths)
-print("Image count: ", image_count)
+batch_size = 32
+epochs = 15
+IMG_HEIGHT = 512
+IMG_WIDTH = 384
 
-label_names = sorted(
-    item.name for item in data_root.glob('*/') if item.is_dir())
-label_to_index = dict((name, index) for index, name in enumerate(label_names))
-all_image_labels = [label_to_index[pathlib.Path(path).parent.name]
-                    for path in all_image_paths]
+image_generator = ImageDataGenerator(rescale=1./255)
+data_gen = image_generator.flow_from_directory(batch_size=batch_size,
+                                               directory=data_root,
+                                               shuffle=True,
+                                               target_size=(
+                                                   IMG_HEIGHT, IMG_WIDTH),
+                                               class_mode='binary')
 
+sample_training_images, _ = next(data_gen)
 
-def preprocess_image(image):
-    image = tf.image.decode_jpeg(image, channels=3)
-    image = tf.image.resize(image, [224, 224])
-    image /= 255.0  # normalize to [0,1] range
+def plotImages(images_arr):
+    fig, axes = plt.subplots(1, 5, figsize=(20,20))
+    axes = axes.flatten()
+    for img, ax in zip( images_arr, axes):
+        ax.imshow(img)
+        ax.axis('off')
+    plt.tight_layout()
+    plt.show()
 
-    return image
+# plotImages(sample_training_images[:5])
 
+model = Sequential([
+    Conv2D(16, 3, padding='same', activation='relu', input_shape=(IMG_HEIGHT, IMG_WIDTH ,3)),
+    MaxPooling2D(),
+    Conv2D(32, 3, padding='same', activation='relu'),
+    MaxPooling2D(),
+    Conv2D(64, 3, padding='same', activation='relu'),
+    MaxPooling2D(),
+    Flatten(),
+    Dense(512, activation='relu'),
+    Dense(1, activation='sigmoid')
+])
 
-def load_and_preprocess_image(path):
-    image = tf.io.read_file(path)
-    return preprocess_image(image)
+model.compile(optimizer='adam',
+              loss='binary_crossentropy',
+              metrics=['accuracy'])
 
+history = model.fit_generator(
+    data_gen,
+    steps_per_epoch=total // batch_size,
+    epochs=epochs
+)
 
-path_ds = tf.data.Dataset.from_tensor_slices(all_image_paths)
-image_ds = path_ds.map(load_and_preprocess_image,
-                       num_parallel_calls=tf.contrib.data.AUTOTUNE)
-label_ds = tf.data.Dataset.from_tensor_slices(
-    tf.cast(all_image_labels, tf.int64))
-image_label_ds = tf.data.Dataset.zip((image_ds, label_ds))
-ds = tf.data.Dataset.from_tensor_slices((all_image_paths, all_image_labels))
+acc = history.history['accuracy']
 
-print("All image paths: ", all_image_paths)
+loss = history.history['loss']
 
-def load_and_preprocess_from_path_label(path, label):
-    return load_and_preprocess_image(path), label
+epochs_range = range(epochs)
 
+plt.figure(figsize=(8, 8))
+plt.subplot(1, 2, 1)
+plt.plot(epochs_range, acc, label='Training Accuracy')
+plt.legend(loc='lower right')
+plt.title('Training Accuracy')
 
-image_label_ds = ds.map(load_and_preprocess_from_path_label)
-
-BATCH_SIZE = 32
-ds = image_label_ds.shuffle(buffer_size=image_count)
-ds = ds.repeat()
-ds = ds.batch(BATCH_SIZE)
-ds = ds.prefetch(buffer_size=tf.contrib.data.AUTOTUNE)
-
-mobile_net = tf.keras.applications.MobileNetV2(
-    input_shape=(224, 224, 3), include_top=False)
-
-
-def change_range(image, label):
-    return 2*image-1, label
-
-
-keras_ds = ds.map(change_range)
-
-image_batch, label_batch = next(iter(keras_ds))
-feature_map_batch = mobile_net(image_batch)
-print(feature_map_batch.shape)
-
-model = tf.keras.Sequential([
-    mobile_net,
-    tf.keras.layers.GlobalAveragePooling2D(),
-    tf.keras.layers.Dense(len(label_names), activation='softmax')])
-
-logit_batch = model(image_batch).numpy()
-
-print("min logit:", logit_batch.min())
-print("max logit:", logit_batch.max())
-print()
-
-print("Shape:", logit_batch.shape)
-
-model.compile(optimizer=tf.keras.optimizers.Adam(),
-              loss='sparse_categorical_crossentropy',
-              metrics=["accuracy"])
-model.fit(ds, epochs=1, steps_per_epoch=tf.math.ceil(
-    len(all_image_paths)/BATCH_SIZE).numpy())
-model.save('trash.h5')
+plt.subplot(1, 2, 2)
+plt.plot(epochs_range, loss, label='Training Loss')
+plt.legend(loc='upper right')
+plt.title('Training Loss')
+plt.show()

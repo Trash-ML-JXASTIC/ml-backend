@@ -8,7 +8,7 @@ import os
 
 def load_image(img_path, show=False):
 
-    img = image.load_img(img_path, target_size=(512, 384))
+    img = image.load_img(img_path, target_size=(224, 224))
     # (height, width, channels)
     img_tensor = image.img_to_array(img)
     # (1, height, width, channels), add a dimension because the model expects this shape: (batch_size, height, width, channels)
@@ -51,13 +51,13 @@ print("Result:")
 
 print("File: ", img_path)
 
-#print("Predicted class: ", labels_index[pred_class])
+print("Predicted class: ", labels_index[pred_class[0]])
 
 print("Possibilities:")
 
-#i = 0
-#for label in labels_index:
-#    print("\t%s ==> %f" % (label, pred[i]))
-#    i = i + 1
+i = 0
+for label in labels_index:
+    print("\t%s ==> %f" % (label, pred[0][i]))
+    i = i + 1
 
 print("Raw PRED data: ", pred)
