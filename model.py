@@ -22,8 +22,8 @@ print('total training glass images:', num_glass)
 print("--")
 print("Total training images:", total)
 
-batch_size = 32
-epochs = 15
+batch_size = 48
+epochs = 5
 IMG_HEIGHT = 512
 IMG_WIDTH = 384
 
@@ -87,3 +87,5 @@ plt.plot(epochs_range, loss, label='Training Loss')
 plt.legend(loc='upper right')
 plt.title('Training Loss')
 plt.show()
+
+model.save('trash.h5')
