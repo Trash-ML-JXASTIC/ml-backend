@@ -70,22 +70,4 @@ history = model.fit_generator(
     epochs=epochs
 )
 
-acc = history.history['accuracy']
-
-loss = history.history['loss']
-
-epochs_range = range(epochs)
-
-plt.figure(figsize=(8, 8))
-plt.subplot(1, 2, 1)
-plt.plot(epochs_range, acc, label='Training Accuracy')
-plt.legend(loc='lower right')
-plt.title('Training Accuracy')
-
-plt.subplot(1, 2, 2)
-plt.plot(epochs_range, loss, label='Training Loss')
-plt.legend(loc='upper right')
-plt.title('Training Loss')
-plt.show()
-
 model.save('trash.h5')
