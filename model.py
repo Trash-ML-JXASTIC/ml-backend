@@ -15,7 +15,7 @@ data_root = Path("./data")
 for item in data_root.iterdir():
     print("Item:", item)
 
-all_image_paths = list(data_root.glob('*/*'))
+all_image_paths = list(data_root.glob("*/*"))
 all_image_paths = [str(path) for path in all_image_paths]
 random.shuffle(all_image_paths)
 
@@ -23,7 +23,7 @@ image_count = len(all_image_paths)
 print("Image count:", image_count)
 
 label_names = sorted(
-    item.name for item in data_root.glob('*/') if item.is_dir())
+    item.name for item in data_root.glob("*/") if item.is_dir())
 label_to_index = dict((name, index) for index, name in enumerate(label_names))
 all_image_labels = [label_to_index[pathlib.Path(path).parent.name]
                     for path in all_image_paths]
@@ -35,7 +35,7 @@ print("All image paths:", all_image_paths)
 
 def preprocess_image(image):
     image = tf.image.decode_jpeg(image, channels=3)
-    image = tf.image.resize(image, [512, 384])
+    image = tf.image.resize(image, [256, 256])
     image /= 255.0  # normalize to [0,1] range
 
     return image
@@ -71,45 +71,23 @@ from tensorflow.keras.layers import Conv2D, GlobalAveragePooling2D, MaxPooling2D
 import numpy as np
 
 model = Sequential()
-model.add(Conv2D(64, (3, 3), activation='relu', input_shape=(512, 384, 3)))
-model.add(Conv2D(64, (3, 3), activation='relu'))
+model.add(Conv2D(64, (3, 3), activation=tf.nn.leaky_relu, input_shape=(256, 256, 3)))
+model.add(Conv2D(64, (3, 3), activation=tf.nn.leaky_relu))
 model.add(MaxPooling2D(3, 3))
-model.add(Conv2D(128, (3, 3), activation='relu'))
-model.add(Conv2D(128, (3, 3), activation='relu'))
+model.add(Conv2D(128, (3, 3), activation=tf.nn.leaky_relu))
+model.add(Conv2D(128, (3, 3), activation=tf.nn.leaky_relu))
 model.add(GlobalAveragePooling2D())
-model.add(Dropout(0.5))
-model.add(Dense(1, activation='sigmoid'))
+# model.add(Dropout(0.5))
+model.add(Dense(len(label_names), activation="softmax"))
 
-model.compile(loss='binary_crossentropy',
-              optimizer='rmsprop',
-              metrics=['accuracy'])
+model.compile(loss="binary_crossentropy",
+              optimizer="adam",
+              metrics=["accuracy"])
 
 image_count = len(all_image_paths)
 
-'''
-class My_Custom_Generator(tf.keras.utils.Sequence) :
-  
-  def __init__(self, image_filenames, labels, batch_size) :
-    self.image_filenames = image_filenames
-    self.labels = labels
-    self.batch_size = batch_size
-    
-    
-  def __len__(self) :
-    return (np.ceil(len(self.image_filenames) / float(self.batch_size))).astype(np.int)
-  
-  
-  def __getitem__(self, idx) :
-    batch_x = self.image_filenames[idx * self.batch_size : (idx+1) * self.batch_size]
-    batch_y = self.labels[idx * self.batch_size : (idx+1) * self.batch_size]
-    
-    return np.array(batch_x)/255.0, np.array(batch_y)
+model.fit(ds, steps_per_epoch=tf.math.ceil(len(all_image_paths)/BATCH_SIZE).numpy() // BATCH_SIZE, epochs=5)
 
-my_training_batch_generator = My_Custom_Generator(all_image_paths, label_names, BATCH_SIZE)
+model.summary()
 
-model.fit_generator(my_training_batch_generator, steps_per_epoch=tf.math.ceil(len(all_image_paths)/BATCH_SIZE).numpy() // BATCH_SIZE, epochs=15)
-'''
-
-model.fit(ds, steps_per_epoch=tf.math.ceil(len(all_image_paths)/BATCH_SIZE).numpy() // BATCH_SIZE, epochs=15)
-
-model.save('trash.h5')
+model.save("trash.h5")

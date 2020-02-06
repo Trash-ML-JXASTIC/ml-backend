@@ -2,6 +2,7 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
+from tensorflow.nn import leaky_relu
 import matplotlib.pyplot as plt
 import numpy as np
 import os
@@ -14,7 +15,7 @@ session = tf.Session(config=config)
 
 def load_image(img_path, show=False):
 
-    img = image.load_img(img_path, target_size=(512, 384))
+    img = image.load_img(img_path, target_size=(256, 256))
     # (height, width, channels)
     img_tensor = image.img_to_array(img)
     # (1, height, width, channels), add a dimension because the model expects this shape: (batch_size, height, width, channels)
@@ -24,20 +25,25 @@ def load_image(img_path, show=False):
 
     if show:
         plt.imshow(img_tensor[0])
-        plt.axis('off')
+        plt.axis("off")
         plt.show()
 
     return img_tensor
 
 
 # load model
-model = load_model("trash.h5")
+model = load_model("trash.h5", custom_objects={"leaky_relu": leaky_relu})
+
+# image filename
+print("Input image filename without extension (.jpg): ", end = "")
+img_filename = input()
 
 # image path
-img_path = 'test/glass3.jpg'
+img_path = "test/" + img_filename + ".jpg"
 
 # load a single image
-new_image = load_image(img_path)
+print("Opening the selected image for confirmation...")
+new_image = load_image(img_path, True)
 
 # check prediction
 pred = model.predict(new_image)
