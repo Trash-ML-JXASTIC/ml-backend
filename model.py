@@ -43,13 +43,13 @@ print("Label to index:", label_to_index)
 print("All train image paths:", all_train_image_paths)
 print("All validation image paths:", all_validation_image_paths)
 
-BATCH_SIZE = 4
+BATCH_SIZE = 16
 if tf.keras.backend.image_data_format() == 'channels_first':
-    input_shape = (3, 512, 384)
+    input_shape = (3, 256, 256)
 else:
-    input_shape = (512, 384, 3)
+    input_shape = (256, 256, 3)
 
-output_shape = (512, 384)
+output_shape = (256, 256)
 
 print("Batch size:", BATCH_SIZE)
 
