@@ -10,8 +10,8 @@ tf.compat.v1.enable_eager_execution()
 
 config = tf.ConfigProto(allow_soft_placement=True)
 config.gpu_options.allow_growth = True
-config.gpu_options.allocator_type = 'BFC'
-config.gpu_options.per_process_gpu_memory_fraction = 3.0
+# config.gpu_options.allocator_type = 'BFC'
+# config.gpu_options.per_process_gpu_memory_fraction = 3.0
 session = tf.Session(config=config)
 
 train_data_root = Path("./data/train")
@@ -54,7 +54,7 @@ output_shape = (256, 256)
 print("Batch size:", BATCH_SIZE)
 
 model = Sequential()
-model.add(Conv2D(32, (3, 3), input_shape=input_shape))
+model.add(Conv2D(16, (3, 3), input_shape=input_shape))
 model.add(Activation(tf.nn.leaky_relu))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
@@ -67,11 +67,26 @@ model.add(Activation(tf.nn.leaky_relu))
 model.add(MaxPooling2D(pool_size=(2, 2)))
 
 model.add(Flatten())
+model.add(Dense(128))
+model.add(Activation(tf.nn.leaky_relu))
+model.add(Dropout(0.2))
+model.add(Dense(len(label_names)))
+model.add(Activation('softmax'))
+
+
+'''
+model = Sequential()
+
+model.add(Conv2D(32, (3, 3), input_shape=input_shape))
+model.add(Activation(tf.nn.leaky_relu))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Flatten())
 model.add(Dense(64))
 model.add(Activation(tf.nn.leaky_relu))
 model.add(Dropout(0.2))
 model.add(Dense(len(label_names)))
 model.add(Activation('softmax'))
+'''
 
 model.compile(loss="categorical_crossentropy",
               optimizer="rmsprop", metrics=["accuracy"])
