@@ -49,10 +49,7 @@ print("--")
 
 labels_index = [
     "cardboard",
-    "paper",
     "plastic",
-    "glass",
-    "metal",
     "trash"
 ]
 

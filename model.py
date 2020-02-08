@@ -1,10 +1,11 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 from pathlib import Path
 from tensorflow.keras.callbacks import ModelCheckpoint
-from tensorflow.keras.layers import Conv2D, BatchNormalization, Activation, Dense, Dropout, Flatten, MaxPooling2D, ZeroPadding2D, Convolution2D, Input
-from tensorflow.keras.models import Sequential, Model
+from tensorflow.keras.layers import Conv2D, BatchNormalization, Activation, Dense, Dropout, Flatten, MaxPooling2D, ZeroPadding2D, Convolution2D, Input, GlobalAveragePooling2D
+from tensorflow.keras.models import Sequential, Model, load_model
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
 import tensorflow as tf
+import os
 
 tf.compat.v1.enable_eager_execution()
 
@@ -53,43 +54,30 @@ output_shape = (256, 256)
 
 print("Batch size:", BATCH_SIZE)
 
-model = Sequential()
-model.add(Conv2D(16, (3, 3), input_shape=input_shape))
-model.add(Activation(tf.nn.leaky_relu))
-model.add(MaxPooling2D(pool_size=(2, 2)))
+if (os.path.exists("trash.h5")):
+    model = load_model("trash.h5", custom_objects={"leaky_relu": tf.nn.leaky_relu})
+else:
+    model = Sequential()
 
-model.add(Conv2D(32, (3, 3)))
-model.add(Activation(tf.nn.leaky_relu))
-model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Conv2D(16, (3, 3), padding="same", strides=2))
+    model.add(Activation(tf.nn.leaky_relu))
 
-model.add(Conv2D(64, (3, 3)))
-model.add(Activation(tf.nn.leaky_relu))
-model.add(MaxPooling2D(pool_size=(2, 2)))
+    model.add(Conv2D(32, (3, 3), padding="same", strides=2))
+    model.add(Activation(tf.nn.leaky_relu))
 
-model.add(Flatten())
-model.add(Dense(128))
-model.add(Activation(tf.nn.leaky_relu))
-model.add(Dropout(0.2))
-model.add(Dense(len(label_names)))
-model.add(Activation('softmax'))
+    model.add(Conv2D(64, (3, 3), padding="same", strides=2))
+    model.add(Activation(tf.nn.leaky_relu))
 
+    model.add(GlobalAveragePooling2D())
 
-'''
-model = Sequential()
+    model.add(Flatten())
+    model.add(Dense(128))
+    model.add(Dropout(0.2))
+    model.add(Dense(len(label_names)))
+    model.add(Activation('softmax'))
 
-model.add(Conv2D(32, (3, 3), input_shape=input_shape))
-model.add(Activation(tf.nn.leaky_relu))
-model.add(MaxPooling2D(pool_size=(2, 2)))
-model.add(Flatten())
-model.add(Dense(64))
-model.add(Activation(tf.nn.leaky_relu))
-model.add(Dropout(0.2))
-model.add(Dense(len(label_names)))
-model.add(Activation('softmax'))
-'''
-
-model.compile(loss="categorical_crossentropy",
-              optimizer="rmsprop", metrics=["accuracy"])
+    model.compile(loss="categorical_crossentropy",
+                optimizer="rmsprop", metrics=["accuracy"])
 
 train_datagen = ImageDataGenerator(
     rescale=1. / 255, shear_range=0.2, zoom_range=0.2, horizontal_flip=True)
