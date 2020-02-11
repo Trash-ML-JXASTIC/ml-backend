@@ -57,27 +57,18 @@ print("Batch size:", BATCH_SIZE)
 if (os.path.exists("trash.h5")):
     model = load_model("trash.h5", custom_objects={"leaky_relu": tf.nn.leaky_relu})
 else:
-    model = Sequential()
+    ds_input = Input(shape=input_shape, name="input")
+    conv1 = Conv2D(16, (3, 3), padding="same", strides=2, activation=tf.nn.leaky_relu, name="conv1")(ds_input)
+    conv2 = Conv2D(32, (3, 3), padding="same", strides=2, activation=tf.nn.leaky_relu, name="conv2")(conv1)
+    conv3 = Conv2D(64, (3, 3), padding="same", strides=2, activation=tf.nn.leaky_relu, name="conv3")(conv2)
+    conv4 = Conv2D(3, (3, 3), padding="same", name="conv4")(conv3)
+    pool1 = GlobalAveragePooling2D(name="pool1")(conv4)
+    act1 = Activation(name="act1", activation="softmax")(pool1)
 
-    model.add(Conv2D(16, (3, 3), padding="same", strides=2))
-    model.add(Activation(tf.nn.leaky_relu))
+    model = Model(inputs=ds_input, outputs=act1)
 
-    model.add(Conv2D(32, (3, 3), padding="same", strides=2))
-    model.add(Activation(tf.nn.leaky_relu))
-
-    model.add(Conv2D(64, (3, 3), padding="same", strides=2))
-    model.add(Activation(tf.nn.leaky_relu))
-
-    model.add(GlobalAveragePooling2D())
-
-    model.add(Flatten())
-    model.add(Dense(128))
-    model.add(Dropout(0.2))
-    model.add(Dense(len(label_names)))
-    model.add(Activation('softmax'))
-
-    model.compile(loss="categorical_crossentropy",
-                optimizer="rmsprop", metrics=["accuracy"])
+model.compile(loss="categorical_crossentropy",
+            optimizer="rmsprop", metrics=["accuracy"])
 
 train_datagen = ImageDataGenerator(
     rescale=1. / 255, shear_range=0.2, zoom_range=0.2, horizontal_flip=True)
@@ -90,7 +81,7 @@ train_generator = train_datagen.flow_from_directory(train_data_root, target_size
 validation_generator = validation_datagen.flow_from_directory(
     validation_data_root, target_size=(output_shape), batch_size=BATCH_SIZE, class_mode='categorical')
 
-filepath = "model-improvement-{epoch:02d}-{val_acc:.2f}.h5"
+filepath = "model-improvement-{epoch:02d}.h5"
 checkpoint = ModelCheckpoint(filepath, monitor='val_acc', verbose=0,
                              save_best_only=False, save_weights_only=False, mode='auto', period=1)
 callbacks_list = [checkpoint]

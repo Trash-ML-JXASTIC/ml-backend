@@ -41,7 +41,7 @@ pred = model.predict(new_image)
 
 print("Raw prediction data: ", pred)
 
-pred_class = model.predict_classes(new_image)
+pred_class = np.argmax(pred, axis=1)
 
 print("Raw prediction class data: ", pred_class)
 
