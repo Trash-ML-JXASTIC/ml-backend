@@ -1,0 +1,23 @@
+clear all;
+close all;
+clc;
+figure;
+xlabel('Epoch （个）');
+ylabel('秒 (s)');
+title('一个 Epoch 的耗时比较');
+axis([1, 30, 0, 12]);
+grid on;
+hold on;
+epoch = 1 : 30;
+t_tot_gpu = [9, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 9, 10, 10, 9, 10];
+t_tot_cpu = [11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11, 11];
+p1 = polyfit(epoch, t_tot_gpu, 7);
+plot(epoch, t_tot_gpu, '+');
+z1 = polyval(p1, epoch);
+plot(epoch, z1, '-');
+p2 = polyfit(epoch, t_tot_cpu, 7);
+plot(epoch, t_tot_cpu, 'x');
+z2 = polyval(p2, epoch);
+plot(epoch, z2, '-.');
+legend('GPU 的实际耗时', 'GPU 的耗时趋势', 'CPU 的实际耗时', 'CPU 的耗时趋势', 'Location', 'SouthEast');
+

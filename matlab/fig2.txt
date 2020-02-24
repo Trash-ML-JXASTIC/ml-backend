@@ -1,0 +1,23 @@
+clear all;
+close all;
+clc;
+figure;
+xlabel('Epoch （个）');
+ylabel('毫秒 (ms)');
+title('每个 Epoch 中平均单个 Step 的耗时比较');
+axis([1, 30, 0, 200]);
+grid on;
+hold on;
+epoch = 1 : 30;
+t_step_gpu = [153, 155, 158, 154, 154, 155, 156, 156, 157, 155, 156, 155, 154, 154, 154, 154, 155, 156, 158, 155, 158, 155, 154, 154, 157, 153, 156, 155, 153, 160];
+t_step_cpu = [185, 178, 178, 179, 179, 182, 178, 178, 179, 179, 181, 181, 180, 178, 177, 181, 180, 181, 178, 180, 178, 178, 179, 182, 177, 180, 181, 180, 179, 182];
+p1 = polyfit(epoch, t_step_gpu, 7);
+plot(epoch, t_step_gpu, '+');
+z1 = polyval(p1, epoch);
+plot(epoch, z1, '-');
+p2 = polyfit(epoch, t_step_cpu, 7);
+plot(epoch, t_step_cpu, 'x');
+z2 = polyval(p2, epoch);
+plot(epoch, z2, '-.');
+legend('GPU 的实际耗时', 'GPU 的耗时趋势', 'CPU 的实际耗时', 'CPU 的耗时趋势', 'Location', 'SouthEast');
+

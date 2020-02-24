@@ -1,0 +1,7 @@
+set(0,'defaultAxesFontName', 'Noto Serif CJK JP');
+
+p = polyfit(epoch, val, 7);
+plot(epoch, val);
+z = polyval(p, epoch);
+plot(epoch, z);
+
