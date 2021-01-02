@@ -2,16 +2,8 @@ import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
-from tensorflow.nn import leaky_relu
 import matplotlib.pyplot as plt
 import numpy as np
-import os
-
-tf.compat.v1.enable_eager_execution()
-
-config = tf.ConfigProto()
-config.gpu_options.allow_growth = True
-session = tf.Session(config=config)
 
 def load_image(img_path, show=False):
 
@@ -27,7 +19,7 @@ def load_image(img_path, show=False):
 
     return img_tensor
 
-model = load_model("trash.h5", custom_objects={"leaky_relu": leaky_relu})
+model = load_model("trash.h5", custom_objects={"leaky_relu": tf.nn.leaky_relu})
 
 print("Input image filename without extension (.jpg): ", end = "")
 img_filename = input()
